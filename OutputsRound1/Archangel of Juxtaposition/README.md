@@ -1,0 +1,1 @@
+## [View Cards](<https://sims-s.github.io/mtg-card-gen/OutputsRound1/Archangel of Juxtaposition/Archangel of Juxtaposition.html>)

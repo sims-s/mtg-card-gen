@@ -210,7 +210,7 @@ def visualize_card(card, savename=None, raise_error=False):
         card = parse_card_str(card, raise_error=raise_error)
     show_card(card, savename)
 
-def form_table(card_dict, output_name):
+def form_table(card_dict, output_name, add_readme=True):
     save_dir = './%s/'%output_name
     os.makedirs(save_dir, exist_ok=True)
     img_dir = save_dir + 'images/'
@@ -236,10 +236,15 @@ def form_table(card_dict, output_name):
         table += this_row
         # break
     table += "</table>"
-    output_name = os.path.join(output_name, '%s.html'%output_name.split('/')[-1])
-    with open(output_name, 'w') as f:
+    table_name = os.path.join(output_name, '%s.html'%output_name.split('/')[-1])
+    with open(table_name, 'w') as f:
         f.write(table)
-    os.startfile('./' + output_name, 'open')
+    if add_readme:
+        text = "## [View Cards](<https://sims-s.github.io/mtg-card-gen/" + table_name.replace('\\', '/') + ">)"
+        with open(os.path.join(output_name, 'README.md'), 'w') as f:
+            f.write(text)
+
+    os.startfile('./' + table_name, 'open')
 
 
 
