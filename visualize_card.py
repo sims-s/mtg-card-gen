@@ -6,26 +6,92 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import copy
 import warnings
-
+from collections import defaultdict
+import re
 
 attribute_order = ['name', 'type', 'cost', 'rarity', 'text', 'power', 'toughness', 'loyalty', 'flavor_text']
 
+def replace_linebreaks(string):
+    targets = [' line_break ', 'line_break ', ' line_break', 'line_break']
+    for t in targets:
+        string = string.replace(t, '\n')
+    return string
 
-def parse_card_str(card, raise_error, just_first=True):
+# Use hueristics to parse a card and make it look as reasonable as possible
+def partial_parse_card(attributes):
+    attributes = [a.strip() for a in attributes]
+    card_dict = defaultdict(lambda : '')
+    card_dict['name'] = attributes.pop(0)
+    # use differnet for loop for each b/c makes enumerate work niucely
+    for i, a in enumerate(attributes):
+        if any([c in a for c in ['—', '-']]) and len(a) < 75:
+            card_dict['type'] = attributes.pop(i)
+            break
+    for i, a in enumerate(attributes):
+        regex = re.compile(r'({\w*})+')
+        if bool(re.match(regex, a)):
+            card_dict['cost'] = attributes.pop(i)
+            break
+    for i, a in enumerate(attributes):
+        if a.lower() in ['common', 'uncommon', 'rare', 'mythic']:
+            card_dict['rarity'] = attributes.pop(i)
+    int_indicies = []
+    def is_int(attribute):
+        try:
+            int(attribute)
+            return True
+        except ValueError:
+            return False
+    for i, a in enumerate(attributes):
+        if is_int(a):
+            int_indicies.append(i)
+    def remove_none(n_times):
+        del_indicies = []
+        for i, a in enumerate(attributes):
+            if a.lower()=='none':
+                del_indicies.append(i)
+        for i in range(min(n_times, len(del_indicies))):
+            attributes.pop(del_indicies[i]-i)
+
+    if len(int_indicies)==0:
+        card_dict['loyalty'] = 'None'
+        card_dict['power'] = 'None'
+        card_dict['toughness'] = 'None'
+        remove_none(3)
+    elif len(int_indicies)==1:
+        card_dict['loyalty'] = attributes.pop(int_indicies[0])
+        card_dict['power'] = 'None'
+        card_dict['toughness'] = 'None'
+        remove_none(2)
+    elif len(int_indicies)==2:
+        card_dict['power'] = attributes.pop(int_indicies[0])
+        card_dict['toughness'] = attributes.pop(int_indicies[1]-1)
+        card_dict['loyalty'] = 'None'
+        remove_none(1)
+    elif len(int_indicies)==3:
+        card_dict['power'] = attributes.pop(int_indicies[0])
+        card_dict['toughness'] = attributes.pop(int_indicies[1]-1)
+        card_dict['loyalty'] = attributes.pop(int_indicies[2]-2)
+    if len(attributes)==1:
+        card_dict['text'] = attributes[0]
+    elif len(attributes) > 1:
+        card_dict['text'] = attributes[0]
+        card_dict['flavor_text'] = ' line_break '.join(attributes[1:])
+    return [card_dict[a] for a in attribute_order]
+    
+        
+
+
+def parse_card_str(card, just_first=True):
     cards = card.split('end_of_card')
     if not just_first:
         raise NotImplementedError
     card = cards[0].strip()
     attributes = card.split('|')
     if not len(attributes)==len(attribute_order):
-        if raise_error:
-            raise ValueError('Got %d pipes, expected %d'%(len(attributes), len(attribute_order)))
-        else:
-            warnings.warn("This card failed to parse!")
-            print(card)
-            return card
+        attributes = partial_parse_card(attributes)
     attributes = [a.strip () for a in attributes]
-    card_dict = {a_k:a_v.replace(' line_break ', '\n') for a_k, a_v in zip(attribute_order, attributes)}
+    card_dict = {a_k:replace_linebreaks(a_v) for a_k, a_v in zip(attribute_order, attributes)}
     return card_dict
 
 """Paramaters for making visualizations"""
@@ -33,7 +99,7 @@ def parse_card_str(card, raise_error, just_first=True):
 img_width = 88*4
 img_height = 64*4
 border_size = 36
-color_to_mpl_color = {
+color_to_mpl_color = defaultdict(lambda: '#ff008c', {
     'white' : 'gold',
     'blue' : 'blue',
     'black' : 'black',
@@ -43,17 +109,18 @@ color_to_mpl_color = {
     'multi': '#cea84c',
     'land' : '#927a34',
     'colorless': '#bfd8f7'
-}
+})
+
 mana_symbol_radius = 12
 mana_symbol_spacing = 5
 fontsize = 12
-mana_symbol_color_mapper = {
+mana_symbol_color_mapper = defaultdict(lambda: '#bfd8f7', {
     'W' : 'gold',
     'U' : 'blue',
     'B' : 'black',
     'R' : 'red',
     'G' : 'green',
-}
+})
 # What's x and what's y  and what's width and what's height has thouroughly gotten to me :P
 # It works.... dont' worry about it....
 mana_symbol_height = img_width - border_size/2 - mana_symbol_spacing
@@ -67,11 +134,19 @@ card_type_font_size = 10
 card_text_height = img_width*.55
 text_wrap_len = 35
 card_text_font_size=10
+max_card_text_length = 400
 
 pt_box_size_height = 25
 pt_box_size_width = 60
 pt_box_loc_height = 25
 pt_box_loc_width = img_height*.68
+
+rarity_color_mapper = defaultdict(lambda: '#1aff00', {
+    'common' : 'black',
+    'uncommon' : 'silver',
+    'rare' : 'gold',
+    'mythic' : 'orange',
+})
 
 
 
@@ -110,7 +185,7 @@ def card_str_to_text_display(card):
     lines = card.split('|')
     lines_and_wrapped = [get_wrapped_and_len(a, text_wrap_len) for a in lines]
     n_lines = sum([n[1] for n in lines_and_wrapped])
-    wrapped = '\n'.join([n[0].strip().replace(' line_break ', '\n') for n in lines_and_wrapped])
+    wrapped = '\n'.join(['attr: ' + replace_linebreaks(n[0].strip()) for n in lines_and_wrapped])
     return wrapped, n_lines
 
 def show_card(card, savename=None):
@@ -147,10 +222,7 @@ def show_card(card, savename=None):
             circle = plt.Circle((x, y), radius=mana_symbol_radius, facecolor='white', edgecolor='black')
             ax.add_patch(circle)
             label = ax.annotate(s, xy=(x,y-5), fontsize=fontsize, ha='center')
-            try:
-                symbol_color = mana_symbol_color_mapper[s]
-            except KeyError:
-                symbol_color = '#bfd8f7'
+            symbol_color = mana_symbol_color_mapper[s]
             alpha = .5 if s in ['B', 'U'] else .75
             symbol_color_circle = plt.Circle((x, y), radius=mana_symbol_radius * .75, facecolor=symbol_color, alpha=alpha)
             ax.add_patch(symbol_color_circle)
@@ -164,11 +236,17 @@ def show_card(card, savename=None):
         ax.add_patch(type_box)
         wrapped_type, n_lines = get_wrapped_and_len(card['type'], text_wrap_len)
         label = ax.annotate(wrapped_type, xy=(25, type_box_pos_height+15-card_type_font_size*(n_lines-1)), fontsize=card_type_font_size)
+
+        # Rarity
+        rarity_box = patches.Rectangle((img_height*.85, type_box_pos_height+3), 22, 22, facecolor = rarity_color_mapper[card['rarity']], edgecolor = 'white', linewidth=2)
+        ax.add_patch(rarity_box)
         
         # Card Text
+        if len(card['text']) > max_card_text_length:
+            card['text'] = card['text'][:max_card_text_length] + '\nmore ommitted text in json'
         wrapped_text, n_lines = get_wrapped_and_len(card['text'], text_wrap_len)
         if not wrapped_text == 'None':
-            text = ax.annotate(wrapped_text, xy=(25, card_text_height+15-1.1*card_text_font_size*(n_lines-1)), fontsize=card_text_font_size)
+            text = ax.annotate(wrapped_text, xy=(25, card_text_height+15-1.1*card_text_font_size*(n_lines-1)), fontsize=card_text_font_size, color='black')
         
         # Flavor text divider and flavor text
         if not card['flavor_text']=='None':
@@ -205,9 +283,9 @@ def show_card(card, savename=None):
         plt.show()
 
 
-def visualize_card(card, savename=None, raise_error=False):
+def visualize_card(card, savename=None):
     if isinstance(card, str):
-        card = parse_card_str(card, raise_error=raise_error)
+        card = parse_card_str(card)
     show_card(card, savename)
 
 def form_table(card_dict, output_name, add_readme=True):
