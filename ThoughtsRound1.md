@@ -1,8 +1,9 @@
 # Sampling Methods
 | - | Successful Parses | Functional | Sensible | Denominator |
 | --- | --- | --- | --- | --- |
-| **Greedy** | 16 | 15 | 11 | 17 |
-| **Beam_5** | 65 | 65 | 50 | 85 
+| **Greedy**             | 16 | 15 | 11 | 17 |
+| **Beam_5**             | 65 | 65 | 50 | 85 |
+| **sample_k=0_p=0_t=1** | 16 | 6 | 2 | 0 |
 
 
 ### Greedy

@@ -1,1 +1,0 @@
-## [View Cards](<https://sims-s.github.io/mtg-card-gen/OutputsRound1/Sliver dodecahedron/Sliver dodecahedron.html>)

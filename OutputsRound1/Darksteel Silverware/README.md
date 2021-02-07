@@ -1,1 +1,0 @@
-## [View Cards](<https://sims-s.github.io/mtg-card-gen/OutputsRound1/Darksteel Silverware/Darksteel Silverware.html>)

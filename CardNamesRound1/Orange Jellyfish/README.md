@@ -1,0 +1,1 @@
+## [View Cards](<https://sims-s.github.io/mtg-card-gen/CardNamesRound1/Orange Jellyfish/Orange Jellyfish.html>)

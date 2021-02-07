@@ -1,0 +1,1 @@
+## [View Cards](<https://sims-s.github.io/mtg-card-gen/CardNamesRound1/Gideon, Zendikar_s Fist/Gideon, Zendikar_s Fist.html>)

@@ -19,6 +19,7 @@ def replace_linebreaks(string):
 
 # Use hueristics to parse a card and make it look as reasonable as possible
 def partial_parse_card(attributes):
+    print('partial parse??')
     attributes = [a.strip() for a in attributes]
     card_dict = defaultdict(lambda : '')
     card_dict['name'] = attributes.pop(0)
@@ -77,6 +78,7 @@ def partial_parse_card(attributes):
     elif len(attributes) > 1:
         card_dict['text'] = attributes[0]
         card_dict['flavor_text'] = ' line_break '.join(attributes[1:])
+    print(card_dict)
     return [card_dict[a] for a in attribute_order]
     
         
@@ -301,13 +303,13 @@ def form_table(card_dict, output_name, add_readme=True):
             max_val = max(max_val, i)
 
     table = "<table> <tr>" + " ".join(["<th><h1>%s</h1></th>"%key for key, _ in card_dict.items()]) + "</tr>"
-    for i in range(max_val):
+    for i in range(max_val+1):
         this_row = "<tr>"
         for key, _ in card_dict.items():
             target_path = img_dir + '%s_%d.png'%(key, i)
             point_path = './images/' + '%s_%d.png'%(key, i)
             if os.path.exists(target_path):
-                this_row += "<td><img src=%s style=\"width:378px;height:528px;\"></td>"%point_path
+                this_row += "<td><img src=\"%s\" style=\"width:378px;height:528px;\"></td>"%point_path
             else:
                 this_row += "<td></td>"
         this_row += "</tr>"
