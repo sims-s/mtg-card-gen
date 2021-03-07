@@ -1,0 +1,1 @@
+## [View Cards](<https://sims-s.github.io/mtg-card-gen/GenerationTypesRound2/beam_5/beam_5.html>)

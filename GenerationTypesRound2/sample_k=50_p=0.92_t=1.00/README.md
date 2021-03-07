@@ -1,0 +1,1 @@
+## [View Cards](<https://sims-s.github.io/mtg-card-gen/GenerationTypesRound2/sample_k=50_p=0.92_t=1.00/sample_k=50_p=0.92_t=1.00.html>)

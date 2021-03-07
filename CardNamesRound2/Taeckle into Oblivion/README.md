@@ -1,0 +1,1 @@
+## [View Cards](<https://sims-s.github.io/mtg-card-gen/CardNamesRound2/Taeckle into Oblivion/Taeckle into Oblivion.html>)
